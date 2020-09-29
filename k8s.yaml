@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kymainactionfrontend
+  labels:
+    app: kymainactionfrontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kymainactionfrontend
+  template:
+    metadata:
+      labels:
+        app: kymainactionfrontend
+    spec:
+      containers:
+      # replace the repository URL with your own repository (e.g. {DockerID}/http-db-service:0.0.x for Docker Hub).
+      - image: kenlomax/kymainactionfrontend:v1 
+        imagePullPolicy: Always
+        name:  kymainactionfrontend
+        ports:
+        - name: http
+          containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kymainactionfrontend
+  labels:
+    app: kymainactionfrontend
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: kymainactionfrontend
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  labels:
+    app: gateway-service
+  name: kymainactionfrontend
+spec:
+  service:
+    host: hds2.aab5bf8.kyma.shoot.live.k8s-hana.ondemand.com
+    name: kymainactionfrontend
+    port: 80
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  rules:
+    - path: /.*
+      methods: ["GET","POST"]
+      accessStrategies:
+        - handler: noop
+      mutators: []

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <body >
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+<h1>
+  Part of Kyma In Action Cloud Lab
+</h1>
+    <h3>Product</h3>
+
+    <table>
+      <tr>
+        <td valign=top>  
+          <img
+          src="https://cdn.glitch.com/24e147b5-1970-496c-957b-24a39cd48005%2Ffluffydog.jpeg?v=1600948114246"
+          id="dog"
+          name="dog"
+        /></td>
+        <td valign=top><h5>What do you think?</h5>
+          <img
+          id="recordButtonDog"
+          name="recordButtonDog"
+          src="https://cdn.glitch.com/24e147b5-1970-496c-957b-24a39cd48005%2Fmic.png?v=1600948121471"
+          width="50,"
+          height="50"
+        /><br></td>
+        <td valign=top>  
+          <img
+          src="https://cdn.glitch.com/24e147b5-1970-496c-957b-24a39cd48005%2Fwhite.png?v=1601370022700"
+          id="wordclouddog"
+          name="wordclouddog"
+        />
+    </td>
+      </tr>
+      <tr>
+        <td valign=top>  
+          <img
+          src=" https://cdn.glitch.com/24e147b5-1970-496c-957b-24a39cd48005%2Ftophat.jpeg?v=1601370642346"
+          id="tophat"
+          name="tophat"
+        /></td>
+        <td valign=top><h5>What do you think?</h5>
+          <img
+          id="recordButtonTopHat"
+          name="recordButtonTopHat"
+          src="https://cdn.glitch.com/24e147b5-1970-496c-957b-24a39cd48005%2Fmic.png?v=1600948121471"
+          width="50,"
+          height="50"
+        /><br></td>
+        <td valign=top>  
+          <img
+          src="https://cdn.glitch.com/24e147b5-1970-496c-957b-24a39cd48005%2Fwhite.png?v=1601370022700"
+          id="wordcloudtophat"
+          name="wordcloudtophat"
+        />
+    </td>82
+      </tr>
+    </table>
+   
+Call with ?bucket=NAME_OF_GOOGE_BUCKET&wordcloudurl=ENCODED_WORDCLOUD_SERVICE_ENDPOINT<br>
+
+    <script>
+      // Adjust these
+
+    const queryString = window.location.search;
+    console.log(queryString);
+    const urlParams = new URLSearchParams(queryString);
+    const BUCKET_NAME = urlParams.get('bucket')
+    const WORDCLOUD_URL = urlParams.get('wordcloudurl')
+    console.log("WORDCLOUD_URL "+WORDCLOUD_URL)
+
+      var wordcloudbucketongoogle="https://storage.googleapis.com/"+BUCKET_NAME
+      URL = window.URL || window.webkitURL;
+      var gumStream;
+      var rec;
+      var input;
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      var audioContext;
+      var recordButton = document.getElementById("recordButton");
+     
+      recordButtonDog.addEventListener("mousedown", function(){ startRecording("dog");}, false);
+      recordButtonDog.addEventListener("mouseup", function(){ stopRecording("dog");}, false);
+      recordButtonTopHat.addEventListener("mousedown", function(){ startRecording("tophat");}, false);
+      recordButtonTopHat.addEventListener("mouseup", function(){ stopRecording("tophat");}, false);
+
+      function startRecording( item ) {
+        var constraints = { audio: true, video: false };
+        navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+          audioContext = new AudioContext();
+          gumStream = stream;
+          input = audioContext.createMediaStreamSource(stream);
+          rec = new Recorder(input, { numChannels: 1 });
+          rec.record();
+        });
+      }
+      var ITEM_NAME="UNKNOWN";
+
+      function stopRecording(item  ) {
+        ITEM_NAME = item;
+        console.log("Stop recording with "+ITEM_NAME)
+        rec.stop();
+        gumStream.getAudioTracks()[0].stop();
+        rec.exportWAV(sendWAVAsJson);
+      }
+
+      function sendWAVAsJson(blob) {
+        console.log("StopRec with "+ITEM_NAME)
+        var reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = function() {
+          var base64String = reader.result;
+          var base64StringShort = base64String.substr(
+            base64String.indexOf(",") + 1
+          );
+          $.post(WORDCLOUD_URL,
+            {
+              name: "audio",
+              item: ITEM_NAME,
+              data: base64StringShort
+            }
+          );
+        };
+        refreshImages()
+      }
+
+      function refreshImages() {
+        document.getElementById("wordclouddog").src =
+          wordcloudbucketongoogle + "/reviewsdog.png?ver=" +
+          new Date().getTime();
+          document.getElementById("wordcloudtophat").src =
+          wordcloudbucketongoogle + "/reviewstophat.png?ver=" +
+          new Date().getTime();
+        setTimeout("refreshImages()", 2000);
+      }
+    </script>
+
+    <br><br><br><br><br><p>
+      <small
+        >Adapted from https://github.com/addpipe/simple-recorderjs-demo and
+        https://addpipe.com</small
+      >
+    </p>
+  </body>
+</html>
