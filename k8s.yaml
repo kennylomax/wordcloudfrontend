@@ -44,7 +44,7 @@ metadata:
   name: kymainactionfrontend
 spec:
   service:
-    host: kymainactionfrontend.<REPLACE WITH YOUR ${KYMA_DOMAIN}>
+    host: kymainactionfrontend.YOUR_KYMA_DOMAIN
     name: kymainactionfrontend
     port: 80
   gateway: kyma-gateway.kyma-system.svc.cluster.local
